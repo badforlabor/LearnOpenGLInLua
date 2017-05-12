@@ -21,7 +21,7 @@ local fid;
 
 local vbo, vao;
 
-local currentfile = 'getting_started/2.hello_triangle'
+local currentfile = 'getting_started/3.shaders_uniform'
 
 local vertex_source = ReadAllText(currentfile .. ".vs");
 local fragment_source = ReadAllText(currentfile .. ".fs");
@@ -80,10 +80,17 @@ function display_func()
   -- use shader
    glUseProgram(ProgramID);
 
+  -- 修改shader属性
+  local time = glutGet(GLUT_ELAPSED_TIME);
+  local g = math.sin(math.rad(time)) / 2.0 + 0.5
+  -- 修改shader中的ourColor属性
+  local vertexColorLocation = glGetUniformLocation(ProgramID, "ourColor");
+  glUniform4f(vertexColorLocation, 0.0, g, 0.0, 1.0);
+
   -- 绘制三角形
   glBindVertexArray(vao);
   glDrawArrays(GL_TRIANGLES, 0, 3);
-
+  glBindVertexArray(0);
 
    glutSwapBuffers()
 end

@@ -9,6 +9,9 @@ print('luaglut.VERSION = ' .. luaglut.VERSION)
 require 'luaglew'
 print('luaglew.VERSION = '   .. luaglew.VERSION)
 
+require 'luastb'
+print('luastb.VERSION = '   .. luastb.VERSION)
+
 require 'lib/libre_util'
 
 local quit = false
@@ -19,9 +22,10 @@ local ProgramID;
 local vid;
 local fid;
 
-local vbo, vao;
+local vbo, vao, veo;
+local texture;
 
-local currentfile = 'getting_started/2.hello_triangle'
+local currentfile = 'getting_started/4.1.textures'
 
 local vertex_source = ReadAllText(currentfile .. ".vs");
 local fragment_source = ReadAllText(currentfile .. ".fs");
@@ -80,10 +84,15 @@ function display_func()
   -- use shader
    glUseProgram(ProgramID);
 
-  -- 绘制三角形
-  glBindVertexArray(vao);
-  glDrawArrays(GL_TRIANGLES, 0, 3);
 
+
+  -- 绘制贴图
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glBindVertexArray(vao);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, {});
+  
+  glBindVertexArray(0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
    glutSwapBuffers()
 end
@@ -110,22 +119,70 @@ ProgramID = LoadShader(vertex_source, fragment_source);
 -- >> 准备数据，绘制一个三角形
 local VBO_ARRAY = glGenBuffers(1);
 local VAO_ARRAY = glGenVertexArrays(1);
+local VEO_ARRAY = glGenBuffers(1);
 vbo = VBO_ARRAY[1];
 vao = VAO_ARRAY[1];
-local vertices = {-0.5, -0.5, 0.0, 
-                  0.5, -0.5, 0.0, 
-                  0.0, 0.5, 0.0}
+veo = VEO_ARRAY[1];
+local vertices = {
+  -- position      color      texture coord
+  0.5, 0.5, 0.0,   1,0,0,     1.0, 1.0,
+  0.5, -0.5, 0.0,  0,1,0,     1.0, 0.0,
+  -0.5, -0.5, 0.0, 0,0,1,     0.0, 0.0,
+  -0.5,0.5,0.0,    1,1,0,     0.0, 1.0,  
+};
+local indices = 
+{
+  0, 1, 3,
+  1, 2, 3
+};
 
 glBindVertexArray(vao);
 
 glBindBuffer(GL_ARRAY_BUFFER, vbo);
 glBufferFormatedData(GL_ARRAY_BUFFER, GL_FLOAT, vertices, GL_STATIC_DRAW);
 
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, 0);
-glEnableVertexAttribArray(0);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, veo);
+glBufferFormatedData(GL_ELEMENT_ARRAY_BUFFER, GL_INT, indices, GL_STATIC_DRAW);
 
-glBindBuffer(GL_ARRAY_BUFFER, 0);
-glBindVertexArray(0);
+-- (position)
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 32, 0);
+glEnableVertexAttribArray(0);
+-- (color)
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 32, 12);
+glEnableVertexAttribArray(1);
+-- (texture)
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 32, 24);
+glEnableVertexAttribArray(2);
+
+-- 加载贴图
+local textures = glGenTextures(1);
+texture = textures[1];
+glBindTexture(GL_TEXTURE_2D, texture);
+
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+local succ,width,height,data = stbi_load("resources/textures/container.jpg");
+--succ,width,height,data = stbi_load("resources/textures/container.jpg");
+--local succ = 1;
+--succ = stbi_load("resources/textures/container.jpg");
+print(height);
+if(succ == 1)
+then
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  stbi_image_free(data);
+else
+  print('load texture failed.' .. succ);
+end
+
+
+--glBindBuffer(GL_ARRAY_BUFFER, 0);
+--glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+--glBindVertexArray(0);
+--glBindTexture(GL_TEXTURE_2D, 0);
 
 
 -- << 数据准备完毕

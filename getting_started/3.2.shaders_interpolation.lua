@@ -21,7 +21,7 @@ local fid;
 
 local vbo, vao;
 
-local currentfile = 'getting_started/2.hello_triangle'
+local currentfile = 'getting_started/3.2.shaders_interpolation'
 
 local vertex_source = ReadAllText(currentfile .. ".vs");
 local fragment_source = ReadAllText(currentfile .. ".fs");
@@ -83,7 +83,7 @@ function display_func()
   -- 绘制三角形
   glBindVertexArray(vao);
   glDrawArrays(GL_TRIANGLES, 0, 3);
-
+  glBindVertexArray(0);
 
    glutSwapBuffers()
 end
@@ -112,17 +112,21 @@ local VBO_ARRAY = glGenBuffers(1);
 local VAO_ARRAY = glGenVertexArrays(1);
 vbo = VBO_ARRAY[1];
 vao = VAO_ARRAY[1];
-local vertices = {-0.5, -0.5, 0.0, 
-                  0.5, -0.5, 0.0, 
-                  0.0, 0.5, 0.0}
+local vertices = {-0.5, -0.5, 0.0, 1,0,0,
+  0.5, -0.5, 0.0, 0,1,0,
+  0.0, 0.5, 0.0, 0,0,1};
 
 glBindVertexArray(vao);
 
 glBindBuffer(GL_ARRAY_BUFFER, vbo);
 glBufferFormatedData(GL_ARRAY_BUFFER, GL_FLOAT, vertices, GL_STATIC_DRAW);
 
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, 0);
+-- 设置shader第一个参数属性(position)
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, 0);
 glEnableVertexAttribArray(0);
+-- 设置shader第二个参数属性(color)
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, 12);
+glEnableVertexAttribArray(1);
 
 glBindBuffer(GL_ARRAY_BUFFER, 0);
 glBindVertexArray(0);
