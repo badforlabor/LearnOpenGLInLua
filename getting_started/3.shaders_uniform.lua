@@ -10,6 +10,7 @@ require 'luaglew'
 print('luaglew.VERSION = '   .. luaglew.VERSION)
 
 require 'lib/libre_util'
+require 'lib/Shader'
 
 local quit = false
 local fps = 15
@@ -25,6 +26,7 @@ local currentfile = 'getting_started/3.shaders_uniform'
 
 local vertex_source = ReadAllText(currentfile .. ".vs");
 local fragment_source = ReadAllText(currentfile .. ".fs");
+local shader;
 
 local function set_material_clay()
    glMaterialfv(GL_FRONT, GL_AMBIENT,  {0.2125, 0.1275, 0.054, 1.0})
@@ -78,14 +80,17 @@ function display_func()
    glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)
 
   -- use shader
-   glUseProgram(ProgramID);
+  -- glUseProgram(ProgramID);
+  shader:Use();
 
   -- 修改shader属性
   local time = glutGet(GLUT_ELAPSED_TIME);
   local g = math.sin(math.rad(time)) / 2.0 + 0.5
   -- 修改shader中的ourColor属性
-  local vertexColorLocation = glGetUniformLocation(ProgramID, "ourColor");
-  glUniform4f(vertexColorLocation, 0.0, g, 0.0, 1.0);
+  --local vertexColorLocation = glGetUniformLocation(ProgramID, "ourColor");
+  --glUniform4f(vertexColorLocation, 0.0, g, 0.0, 1.0);
+  shader:Set4Float("ourColor", 0, g, 0, 1);
+
 
   -- 绘制三角形
   glBindVertexArray(vao);
@@ -111,7 +116,8 @@ window = glutCreateWindow(title)
 
 -- >> init glew and shader
 glewInit()
-ProgramID = LoadShader(vertex_source, fragment_source);
+--ProgramID = LoadShader(vertex_source, fragment_source);
+shader = Shader:new(nil, currentfile .. ".vs", currentfile .. ".fs");
 -- << init end
 
 -- >> 准备数据，绘制一个三角形
