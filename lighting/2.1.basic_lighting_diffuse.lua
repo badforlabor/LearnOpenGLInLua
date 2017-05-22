@@ -14,15 +14,16 @@ print('luaglm.VERSION = '   .. luaglm.VERSION)
 
 require 'lib/libre_util'
 require 'lib/Camera'
+require 'lib/Shader'
 
 
 local camera = Camera:new();
-camera.Position.z = -50;
+camera.Position.z = 0;
 camera.Position.y = 0;
 camera.Position.x = 0;
 camera:updateCameraVectors();
 
-lightPos = glm.vec3:new(0, 0, -5);
+lightPos = glm.vec3:new(1.2, 1.0, 2.0);
 
 local quit = false
 local fps = 15
@@ -32,14 +33,10 @@ local lightingShader, lampShader;
 local vid;
 local fid;
 
-local vbo, vao, lightVAO;
+local vbo, cubeVAO, lightVAO;
 
-local currentfile = 'lighting/1.colors'
+local currentfile = 'lighting/2.1.basic_lighting_diffuse'
 
-local vertex_source = ReadAllText(currentfile .. ".vs");
-local fragment_source = ReadAllText(currentfile .. ".fs");
-
-local LastX, LastY;
 
 local function set_material_clay()
    glMaterialfv(GL_FRONT, GL_AMBIENT,  {0.2125, 0.1275, 0.054, 1.0})
@@ -94,38 +91,38 @@ end
 function display_func()
    if quit then return end
 
-  -- glClearColor(0.2, 0.3, 0.3, 1.0);
-  glClearColor(0, 0, 0, 1.0);
+  glClearColor(0.2, 0.3, 0.3, 1.0);
+  --glClearColor(0, 0, 0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)
 
   -- 设置物体的位置
-  glUseProgram(lightingShader);
-  glUniform3fv(glGetUniformLocation(lightingShader, "objectColor"), 1, {1.0, 0.5, 0.31});
-  glUniform3fv(glGetUniformLocation(lightingShader, "lightColor"),  1, {1.0, 1.0, 1.0});
+  lightingShader:use();
+  lightingShader:setVec3("objectColor", 1.0, 0.5, 0.31);
+  lightingShader:setVec3("lightColor", 1.0, 1.0, 1.0);
+  lightingShader:setVec3("lightPos", lightPos);
 
-  local projection = glm.perspective(glm.radians(camera.Zoom), 800 / 600.0, -50, 100);
+  local projection = glm.perspective(glm.radians(camera.Zoom), 800 / 600.0, 0.1, 100);
   local view = camera:GetViewMatrix();
   local model = glm.mat4:new();
-  glUniformMatrix4fv(glGetUniformLocation(lightingShader, "projection"), 1, GL_FALSE, Mat4ToTable(projection));
-  glUniformMatrix4fv(glGetUniformLocation(lightingShader, "view"), 1, GL_FALSE, Mat4ToTable(view));
-  glUniformMatrix4fv(glGetUniformLocation(lightingShader, "model"), 1, GL_FALSE, Mat4ToTable(model));
-
+  lightingShader:setMat4("projection", projection);
+  lightingShader:setMat4("view", view);
+  lightingShader:setMat4("model", model);
 
   -- 绘制三角形
-  glBindVertexArray(vao);
-  glDrawArrays(GL_TRIANGLES, 0, 36);
+  glBindVertexArray(cubeVAO);
+  --glDrawArrays(GL_TRIANGLES, 0, 36);
 
   -- 设置灯的位置
 
-  glUseProgram(lampShader);
+  lampShader:use();
 
-  glUniformMatrix4fv(glGetUniformLocation(lampShader, "projection"), 1, GL_FALSE, Mat4ToTable(projection));
-  glUniformMatrix4fv(glGetUniformLocation(lampShader, "view"), 1, GL_FALSE, Mat4ToTable(view));
+  lampShader:setMat4("projection", projection);
+  lampShader:setMat4("view", view);
   
   model = glm.mat4:new();
-  model = glm.scale(model, glm.vec3:new(0.2,0.2,0.2));
   model = glm.translate(model, lightPos);
-  glUniformMatrix4fv(glGetUniformLocation(lampShader, "model"), 1, GL_FALSE, Mat4ToTable(model));
+  model = glm.scale(model, glm.vec3:new(0.2,0.2,0.2));
+  lampShader:setMat4("model", model);
 
   -- print('proj=' .. Mat4ToString(projection));
   -- print('view=' .. Mat4ToString(view));
@@ -135,22 +132,8 @@ function display_func()
   glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
-   glutSwapBuffers()
+  glutSwapBuffers()
 end
-
-function mouse_func(button, updown, x, y)
-  LastX = x;
-  LastY = y;
-  print(string.format('button:%d, updown:%d, x:%d, y:%d', button, updown, x, y));
-end
-
-function motion_func(x, y)
-  print(string.format('x:%d, y:%d', x, y));
-  camera:ProcessMouseMovement(x - LastX, y - LastY);
-  LastX = x;
-  LastY = y;  
-end
-
 
 -- press ESC to exit
 function keyboard_func(key,x,y)
@@ -192,73 +175,75 @@ glutReshapeWindow(800,600);
 
 -- >> init glew and shader
 glewInit()
-lampShader = LoadShaderEx(currentfile .. '.lamp.vs', currentfile .. '.lamp.fs');
-lightingShader = LoadShaderEx(currentfile .. '.vs', currentfile .. '.fs');
+lampShader = Shader:new(currentfile .. '.lamp.vs', currentfile .. '.lamp.fs');
+lightingShader = Shader:new(currentfile .. '.vs', currentfile .. '.fs');
 -- << init end
 
 -- >> 准备数据，绘制一个三角形
 local VBO_ARRAY = glGenBuffers(1);
 local VAO_ARRAY = glGenVertexArrays(2);
 vbo = VBO_ARRAY[1];
-vao = VAO_ARRAY[1];
+cubeVAO = VAO_ARRAY[1];
 lightVAO = VAO_ARRAY[2];
 local vertices = 
     {
-        -0.5, -0.5, -0.5, 
-         0.5, -0.5, -0.5,  
-         0.5,  0.5, -0.5,  
-         0.5,  0.5, -0.5,  
-        -0.5,  0.5, -0.5, 
-        -0.5, -0.5, -0.5, 
+        -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+         0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+         0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+         0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+        -0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+        -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
 
-        -0.5, -0.5,  0.5, 
-         0.5, -0.5,  0.5,  
-         0.5,  0.5,  0.5,  
-         0.5,  0.5,  0.5,  
-        -0.5,  0.5,  0.5, 
-        -0.5, -0.5,  0.5, 
+        -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
+         0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
+         0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+         0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+        -0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+        -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
 
-        -0.5,  0.5,  0.5, 
-        -0.5,  0.5, -0.5, 
-        -0.5, -0.5, -0.5, 
-        -0.5, -0.5, -0.5, 
-        -0.5, -0.5,  0.5, 
-        -0.5,  0.5,  0.5, 
+        -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
+        -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,
+        -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+        -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+        -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,
+        -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
 
-         0.5,  0.5,  0.5,  
-         0.5,  0.5, -0.5,  
-         0.5, -0.5, -0.5,  
-         0.5, -0.5, -0.5,  
-         0.5, -0.5,  0.5,  
-         0.5,  0.5,  0.5,  
+         0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+         0.5,  0.5, -0.5,  1.0,  0.0,  0.0,
+         0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+         0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+         0.5, -0.5,  0.5,  1.0,  0.0,  0.0,
+         0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
 
-        -0.5, -0.5, -0.5, 
-         0.5, -0.5, -0.5,  
-         0.5, -0.5,  0.5,  
-         0.5, -0.5,  0.5,  
-        -0.5, -0.5,  0.5, 
-        -0.5, -0.5, -0.5, 
+        -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+         0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+         0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+         0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+        -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+        -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
 
-        -0.5,  0.5, -0.5, 
-         0.5,  0.5, -0.5,  
-         0.5,  0.5,  0.5,  
-         0.5,  0.5,  0.5,  
-        -0.5,  0.5,  0.5, 
-        -0.5,  0.5, -0.5, 
+        -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+         0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+         0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+         0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+        -0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+        -0.5,  0.5, -0.5,  0.0,  1.0,  0.0
     };
 
 
 glBindBuffer(GL_ARRAY_BUFFER, vbo);
 glBufferFormatedData(GL_ARRAY_BUFFER, GL_FLOAT, vertices, GL_STATIC_DRAW);
 
-glBindVertexArray(vao);
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof_float(), 0);
+glBindVertexArray(cubeVAO);
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof_float(), 0);
 glEnableVertexAttribArray(0);
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof_float(), 3 * sizeof_float());
+glEnableVertexAttribArray(1);
 
 glBindBuffer(GL_ARRAY_BUFFER, vbo);
 glBindVertexArray(lightVAO);
 
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof_float(), 0);
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof_float(), 0);
 glEnableVertexAttribArray(0);
 -- << 数据准备完毕
 
@@ -267,7 +252,5 @@ glutDisplayFunc(display_func)
 glutKeyboardFunc(keyboard_func)
 glutReshapeFunc(resize_func)
 glutTimerFunc(msec, timer_func, 0)
-glutMouseFunc(mouse_func);
-glutMotionFunc(motion_func);
 
 glutMainLoop()

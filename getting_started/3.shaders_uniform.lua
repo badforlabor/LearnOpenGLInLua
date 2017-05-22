@@ -117,7 +117,7 @@ window = glutCreateWindow(title)
 -- >> init glew and shader
 glewInit()
 --ProgramID = LoadShader(vertex_source, fragment_source);
-shader = Shader:new(nil, currentfile .. ".vs", currentfile .. ".fs");
+shader = Shader:new(currentfile .. ".vs", currentfile .. ".fs");
 -- << init end
 
 -- >> 准备数据，绘制一个三角形

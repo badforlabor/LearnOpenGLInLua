@@ -22,9 +22,11 @@ function Camera:updateCameraVectors()
   self.Front.x = math.cos(glm.radians(self.Yaw)) * math.cos(glm.radians(self.Pitch));
   self.Front.y = math.sin(glm.radians(self.Pitch));
   self.Front.z = math.sin(glm.radians(self.Yaw)) * math.cos(glm.radians(self.Pitch));
-  
+    
+  self.Front = glm.normalize(self.Front);
   self.Right = glm.normalize(glm.cross(self.Front, self.WorldUp));
   self.Up = glm.normalize(glm.cross(self.Right, self.Front));
+  print('camera rotation, front=' .. Vec3ToString(self.Front) .. ', right=' .. Vec3ToString(self.Right) .. ', up=' .. Vec3ToString(self.Up));
 end
 
 function Camera:new(o)
@@ -68,4 +70,14 @@ end
 
 function Camera:ProcessMouseScroll(offset)
   self.Zoom = self.Zoom + offset;
+end
+
+function Camera:ProcessMouseMovement(xoffset,yoffset)
+  local sensitivity = 1;
+  xoffset = xoffset * sensitivity;
+  yoffset = yoffset * sensitivity;
+  self.Yaw = self.Yaw + xoffset;
+  self.Pitch = self.Pitch + yoffset;
+  
+  self:updateCameraVectors();
 end
