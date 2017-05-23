@@ -26,7 +26,7 @@ function Camera:updateCameraVectors()
   self.Front = glm.normalize(self.Front);
   self.Right = glm.normalize(glm.cross(self.Front, self.WorldUp));
   self.Up = glm.normalize(glm.cross(self.Right, self.Front));
-  print('camera rotation, front=' .. Vec3ToString(self.Front) .. ', right=' .. Vec3ToString(self.Right) .. ', up=' .. Vec3ToString(self.Up));
+  -- print('camera rotation, front=' .. Vec3ToString(self.Front) .. ', right=' .. Vec3ToString(self.Right) .. ', up=' .. Vec3ToString(self.Up));
 end
 
 function Camera:new(o)

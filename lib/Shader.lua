@@ -22,7 +22,7 @@ function Shader:new(vs, fs)
 end
 
 function Shader:Use()
-  --print(self.ID);
+  --print('shader:' .. self.ID);
   glUseProgram(self.ID);
 end
 function Shader:use()

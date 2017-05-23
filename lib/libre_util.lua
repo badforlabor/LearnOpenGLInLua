@@ -82,19 +82,19 @@ end
 function Mat4ToTable(m)
   local a = 
   {
-      m.get(m,0,0), m.get(m,0,1), m.get(m,0,2), m.get(m,0,3),
-      m.get(m,1,0), m.get(m,1,1), m.get(m,1,2), m.get(m,1,3),
-      m.get(m,2,0), m.get(m,2,1), m.get(m,2,2), m.get(m,2,3),
-      m.get(m,3,0), m.get(m,3,1), m.get(m,3,2), m.get(m,3,3),
+      m:get(0,0), m:get(0,1), m:get(0,2), m:get(0,3),
+      m:get(1,0), m:get(1,1), m:get(1,2), m:get(1,3),
+      m:get(2,0), m:get(2,1), m:get(2,2), m:get(2,3),
+      m:get(3,0), m:get(3,1), m:get(3,2), m:get(3,3)
   };
   return a;
 end
 function Mat4ToString(v)
   return string.format("[%f %.2f %.2f %.2f, %.2f %.2f %.2f %.2f, %.2f %.2f %.2f %.2f, %.2f %.2f %.2f %.2f]", 
-      v.get(v, 0,0), v.get(v, 0,1), v.get(v, 0,2), v.get(v, 0,3),
-      v.get(v, 1,0), v.get(v, 1,1), v.get(v, 1,2), v.get(v, 1,3),
-      v.get(v, 2,0), v.get(v, 2,1), v.get(v, 2,2), v.get(v, 2,3),
-      v.get(v, 3,0), v.get(v, 3,1), v.get(v, 3,2), v.get(v, 3,3)
+      v:get(0,0), v:get(0,1), v:get(0,2), v:get(0,3),
+      v:get(1,0), v:get(1,1), v:get(1,2), v:get(1,3),
+      v:get(2,0), v:get(2,1), v:get(2,2), v:get(2,3),
+      v:get(3,0), v:get(3,1), v:get(3,2), v:get(3,3)
       )
 end
 function Vec3ToString(v)
