@@ -2,12 +2,12 @@
 
 print('_VERSION = ' .. _VERSION)
 
+require 'luaglew'
+print('luaglew.VERSION = '   .. luaglew.VERSION)
+
 require 'luaglut'
 print('luaglut.VERSION = ' .. luaglut.VERSION)
 
-
-require 'luaglew'
-print('luaglew.VERSION = '   .. luaglew.VERSION)
 
 require 'luaglm'
 print('luaglm.VERSION = '   .. luaglm.VERSION)
@@ -18,50 +18,25 @@ require 'lib/Shader'
 
 
 local camera = Camera:new();
-camera.Position.z = 0;
-camera.Position.y = 0;
 camera.Position.x = 0;
+camera.Position.y = 0;
+camera.Position.z = 3;
 camera:updateCameraVectors();
 
-lightPos = glm.vec3:new(1.2, 1.0, 2.0);
+lightPos = glm.vec3:new(1.1, 1, 2.0);
 
 local quit = false
-local fps = 15
+local fps = 60
 local msec = 1000 / fps
 
 local lightingShader, lampShader;
-local vid;
-local fid;
 
 local vbo, cubeVAO, lightVAO;
 
 local currentfile = 'lighting/2.1.basic_lighting_diffuse'
+-- local currentfile = 'lighting/1.colors'
 
-
-local function set_material_clay()
-   glMaterialfv(GL_FRONT, GL_AMBIENT,  {0.2125, 0.1275, 0.054, 1.0})
-   glMaterialfv(GL_FRONT, GL_DIFFUSE,  {0.514, 0.4284, 0.18144, 1.0})
-   glMaterialfv(GL_FRONT, GL_SPECULAR, {0.393548, 0.271906, 0.166721, 1.0})
-   glMaterialf(GL_FRONT, GL_SHININESS, 0.2 * 128.0)
-
-   glMaterialfv(GL_BACK, GL_AMBIENT,  {0.1, 0.18725, 0.1745, 1.0})
-   glMaterialfv(GL_BACK, GL_DIFFUSE,  {0.396, 0.74151, 0.69102, 1.0})
-   glMaterialfv(GL_BACK, GL_SPECULAR, {0.297254, 0.30829, 0.306678, 1.0})
-   glMaterialf(GL_BACK, GL_SHININESS, 0.1 * 128.0)
-
-   glEnable(GL_LIGHT0)
-   glLightfv(GL_LIGHT0, GL_AMBIENT, {0.2, 0.2, 0.2, 1})
-   glLightfv(GL_LIGHT0, GL_DIFFUSE, {1, 1, 1, 1})
-   glLightfv(GL_LIGHT0, GL_POSITION, {0.0, 1.0, 0.0, 0.0})
-
-   glEnable(GL_LIGHT1)
-   glLightfv(GL_LIGHT1, GL_AMBIENT, {0.2, 0.2, 0.2, 1})
-   glLightfv(GL_LIGHT1, GL_DIFFUSE, {1, 1, 1, 1})
-   glLightfv(GL_LIGHT1, GL_POSITION, {1.0, 0.0, 1.0, 0.0})
-
-   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE)
-   glFrontFace(GL_CW)
-end
+local LastX, LastY;
 
 function resize_func(w, h)
   --[[
@@ -69,6 +44,7 @@ function resize_func(w, h)
    glMatrixMode(GL_PROJECTION)
    glLoadIdentity()
    ]]--
+   print('viewport:' .. w .. ',' .. h);
    glViewport(0,0,w,h)
    --[[
    gluPerspective(45,ratio,1,1000)
@@ -76,8 +52,8 @@ function resize_func(w, h)
    glLoadIdentity()
    set_material_clay()
    ]]--
-   glEnable(GL_DEPTH_TEST)
-   glEnable(GL_NORMALIZE)
+   --glEnable(GL_DEPTH_TEST)
+   --glEnable(GL_NORMALIZE)
 end
 
 function timer_func()
@@ -89,10 +65,9 @@ function timer_func()
 end
 
 function display_func()
-   if quit then return end
-
+  if quit then return end
+  
   glClearColor(0.2, 0.3, 0.3, 1.0);
-  --glClearColor(0, 0, 0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)
 
   -- 设置物体的位置
@@ -110,18 +85,17 @@ function display_func()
 
   -- 绘制三角形
   glBindVertexArray(cubeVAO);
-  --glDrawArrays(GL_TRIANGLES, 0, 36);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
 
   -- 设置灯的位置
 
   lampShader:use();
 
-  lampShader:setMat4("projection", projection);
-  lampShader:setMat4("view", view);
-  
   model = glm.mat4:new();
   model = glm.translate(model, lightPos);
   model = glm.scale(model, glm.vec3:new(0.2,0.2,0.2));
+  lampShader:setMat4("projection", projection);
+  lampShader:setMat4("view", view);  
   lampShader:setMat4("model", model);
 
   -- print('proj=' .. Mat4ToString(projection));
@@ -133,6 +107,19 @@ function display_func()
 
 
   glutSwapBuffers()
+end
+
+function mouse_func(button, updown, x, y)
+  LastX = x;
+  LastY = y;
+  -- print(string.format('button:%d, updown:%d, x:%d, y:%d', button, updown, x, y));
+end
+
+function motion_func(x, y)
+  -- print(string.format('x:%d, y:%d', x, y));
+  camera:ProcessMouseMovement(x - LastX, LastY - y);
+  LastX = x;
+  LastY = y;  
 end
 
 -- press ESC to exit
@@ -175,6 +162,7 @@ glutReshapeWindow(800,600);
 
 -- >> init glew and shader
 glewInit()
+glEnable(GL_DEPTH_TEST);
 lampShader = Shader:new(currentfile .. '.lamp.vs', currentfile .. '.lamp.fs');
 lightingShader = Shader:new(currentfile .. '.vs', currentfile .. '.fs');
 -- << init end
@@ -252,5 +240,7 @@ glutDisplayFunc(display_func)
 glutKeyboardFunc(keyboard_func)
 glutReshapeFunc(resize_func)
 glutTimerFunc(msec, timer_func, 0)
+glutMouseFunc(mouse_func);
+glutMotionFunc(motion_func);
 
 glutMainLoop()

@@ -26,12 +26,10 @@ camera:updateCameraVectors();
 lightPos = glm.vec3:new(1.1, 1, 2.0);
 
 local quit = false
-local fps = 15
+local fps = 60
 local msec = 1000 / fps
 
 local lightingShader, lampShader;
-local vid;
-local fid;
 
 local vbo, cubeVAO, lightVAO;
 
@@ -39,39 +37,14 @@ local currentfile = 'lighting/1.colors'
 
 local LastX, LastY;
 
-local function set_material_clay()
-   glMaterialfv(GL_FRONT, GL_AMBIENT,  {0.2125, 0.1275, 0.054, 1.0})
-   glMaterialfv(GL_FRONT, GL_DIFFUSE,  {0.514, 0.4284, 0.18144, 1.0})
-   glMaterialfv(GL_FRONT, GL_SPECULAR, {0.393548, 0.271906, 0.166721, 1.0})
-   glMaterialf(GL_FRONT, GL_SHININESS, 0.2 * 128.0)
-
-   glMaterialfv(GL_BACK, GL_AMBIENT,  {0.1, 0.18725, 0.1745, 1.0})
-   glMaterialfv(GL_BACK, GL_DIFFUSE,  {0.396, 0.74151, 0.69102, 1.0})
-   glMaterialfv(GL_BACK, GL_SPECULAR, {0.297254, 0.30829, 0.306678, 1.0})
-   glMaterialf(GL_BACK, GL_SHININESS, 0.1 * 128.0)
-
-   glEnable(GL_LIGHT0)
-   glLightfv(GL_LIGHT0, GL_AMBIENT, {0.2, 0.2, 0.2, 1})
-   glLightfv(GL_LIGHT0, GL_DIFFUSE, {1, 1, 1, 1})
-   glLightfv(GL_LIGHT0, GL_POSITION, {0.0, 1.0, 0.0, 0.0})
-
-   glEnable(GL_LIGHT1)
-   glLightfv(GL_LIGHT1, GL_AMBIENT, {0.2, 0.2, 0.2, 1})
-   glLightfv(GL_LIGHT1, GL_DIFFUSE, {1, 1, 1, 1})
-   glLightfv(GL_LIGHT1, GL_POSITION, {1.0, 0.0, 1.0, 0.0})
-
-   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE)
-   glFrontFace(GL_CW)
-end
-
 function resize_func(w, h)
   --[[
    local ratio = w / h
    glMatrixMode(GL_PROJECTION)
    glLoadIdentity()
    ]]--
-   --print('viewport:' .. w ',' .. h);
-   --glViewport(0,0,w,h)
+   print('viewport:' .. w .. ',' .. h);
+   glViewport(0,0,w,h)
    --[[
    gluPerspective(45,ratio,1,1000)
    glMatrixMode(GL_MODELVIEW)
@@ -94,11 +67,11 @@ function display_func()
    if quit then return end
 
 
-  glViewport(0,0,800,600);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
+  --glViewport(0,0,800,600);
+	--	glMatrixMode(GL_PROJECTION);
+	--	glLoadIdentity();
+	--	glMatrixMode(GL_MODELVIEW);
+	--	glLoadIdentity();
 
   glClearColor(0.2, 0.3, 0.3, 1.0);
   --glClearColor(0, 0, 0, 1.0);
@@ -202,7 +175,7 @@ function keyboard_func(key,x,y)
 end
 
 
-glutInit(nil)
+glutInit(arg)
 glutInitDisplayMode(GLUT_RGB + GLUT_DOUBLE + GLUT_DEPTH)
 if arg then title = arg[0] else title = "glut" end
 window = glutCreateWindow(title)
