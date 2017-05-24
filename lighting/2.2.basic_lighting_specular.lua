@@ -37,6 +37,8 @@ local currentfile = 'lighting/2.2.basic_lighting_specular'
 -- local currentfile = 'lighting/1.colors'
 
 local LastX, LastY;
+local lightColor = glm.vec3:new(1,1,1)--(1,0,0);
+local objectColor = glm.vec3:new(1.0, 0.5, 0.31);--(0.3, 1, 1);
 
 function resize_func(w, h)
   --[[
@@ -72,8 +74,8 @@ function display_func()
 
   -- 设置物体的位置
   lightingShader:use();
-  lightingShader:setVec3("objectColor", 1.0, 0.5, 0.31);
-  lightingShader:setVec3("lightColor", 1.0, 1.0, 1.0);
+  lightingShader:setVec3("objectColor", objectColor);
+  lightingShader:setVec3("lightColor", lightColor);
   lightingShader:setVec3("lightPos", lightPos);
   lightingShader:setVec3("viewPos", camera.Position);
 
@@ -92,6 +94,8 @@ function display_func()
   -- 设置灯的位置
 
   lampShader:use();
+  
+  lampShader:setVec3("lightColor", lightColor);
 
   model = glm.mat4:new();
   model = glm.translate(model, lightPos);

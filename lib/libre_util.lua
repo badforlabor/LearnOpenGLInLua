@@ -1,5 +1,6 @@
 require 'luaglew'
 require 'luaglm'
+require 'luastb'
 
 -- 读取文件
 function ReadAllText(filename)
@@ -59,6 +60,40 @@ function LoadShaderEx(vs, fs)
   local fragment_source = ReadAllText(fs);
   local sid = LoadShader(vertex_source, fragment_source);
   return sid;
+end
+
+function LoadTexture(path)
+  local ret = 0;
+  
+  local succ,width,height,data,comp = stbi_load(path);
+  
+  if(succ == 1)
+  then
+    local format = GL_RGB;
+    
+    if (comp == 1) then format = GL_RED; end
+    if (comp == 3) then format = GL_RGB; end
+    if (comp == 4) then format = GL_RGBA; end
+    
+    local textures = glGenTextures(1);
+    local texture = textures[1];
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+    
+    ret = texture;
+  else
+    print('load texture failed:' .. path);
+  end
+  
+  return ret;
 end
 
 -- vec3, mat4工具函数

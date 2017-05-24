@@ -48,7 +48,7 @@ end
 
 function Camera:ProcessKeyboard(pos)
   
-  local delta = 0.1;
+  local delta = 0.25;
   if(pos == 0)
   then
     self.Position = self.Position + self.Front * delta;
@@ -73,7 +73,7 @@ function Camera:ProcessMouseScroll(offset)
 end
 
 function Camera:ProcessMouseMovement(xoffset,yoffset)
-  local sensitivity = 1;
+  local sensitivity = 0.1;
   xoffset = xoffset * sensitivity;
   yoffset = yoffset * sensitivity;
   self.Yaw = self.Yaw + xoffset;

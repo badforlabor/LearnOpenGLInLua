@@ -76,10 +76,10 @@ function display_func()
   lightingShader:setVec3("viewPos", camera.Position);
   
   local time = glm.radians( glutGet(GLUT_ELAPSED_TIME) );  
-  local lightColor = glm.vec3:new();
-  lightColor.x = math.sin(time * 2.0);
-  lightColor.y = math.sin(time * 0.7);
-  lightColor.z = math.sin(time * 1.3);
+  local lightColor = glm.vec3:new(1,1,1);
+  --lightColor.x = math.sin(time * 2.0);
+  --lightColor.y = math.sin(time * 0.7);
+  --lightColor.z = math.sin(time * 1.3);
   local diffuseColor = lightColor * glm.vec3:new(0.5,0.5,0.5);
   local ambientColor = diffuseColor * glm.vec3:new(0.2,0.2,0.2);
   lightingShader:setVec3("light.ambient", ambientColor);

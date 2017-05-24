@@ -155,6 +155,7 @@ glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 32, 24);
 glEnableVertexAttribArray(2);
 
 -- 加载贴图
+--[[
 local textures = glGenTextures(1);
 texture = textures[1];
 glBindTexture(GL_TEXTURE_2D, texture);
@@ -164,7 +165,7 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-local succ,width,height,data = stbi_load("resources/textures/container.jpg");
+local succ,width,height,data,comp = stbi_load("resources/textures/container.jpg");
 --succ,width,height,data = stbi_load("resources/textures/container.jpg");
 --local succ = 1;
 --succ = stbi_load("resources/textures/container.jpg");
@@ -177,7 +178,8 @@ then
 else
   print('load texture failed.' .. succ);
 end
-
+]]--
+texture = LoadTexture("resources/textures/container.jpg");
 
 --glBindBuffer(GL_ARRAY_BUFFER, 0);
 --glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
