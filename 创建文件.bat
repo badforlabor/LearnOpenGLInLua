@@ -1,7 +1,7 @@
-set src=5.3.light_casters_spot
-set dst=3.1.model_loading
+set src=1.1.depth_testing
+set dst=2.1.stencil_testing
 
-cd lighting
+cd advanced_opengl
 
 copy /y %src%.lua %dst%.lua
 copy /y %src%.vs %dst%.vs
