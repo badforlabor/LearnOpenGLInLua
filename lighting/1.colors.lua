@@ -76,7 +76,7 @@ function display_func()
   glClearColor(0.2, 0.3, 0.3, 1.0);
   --glClearColor(0, 0, 0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)
-
+  
   -- 设置物体的位置
   lightingShader:use();
   lightingShader:SetVec3("objectColor", 1.0, 0.5, 0.31);
@@ -242,7 +242,6 @@ local vertices =
         -0.5,  0.5,  0.5, 
         -0.5,  0.5, -0.5, 
     };
-
 
 glBindBuffer(GL_ARRAY_BUFFER, vbo);
 glBufferFormatedData(GL_ARRAY_BUFFER, GL_FLOAT, vertices, GL_STATIC_DRAW);

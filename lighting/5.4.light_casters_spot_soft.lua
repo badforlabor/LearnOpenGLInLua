@@ -191,6 +191,7 @@ glutReshapeWindow(800,600);
 
 -- >> init glew and shader
 glewInit()
+print(glGetString(GL_VERSION));
 glEnable(GL_DEPTH_TEST);
 lampShader = Shader:new(currentfile .. '.lamp.vs', currentfile .. '.lamp.fs');
 lightingShader = Shader:new(currentfile .. '.vs', currentfile .. '.fs');

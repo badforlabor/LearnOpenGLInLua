@@ -1,5 +1,5 @@
 set src=1.1.depth_testing
-set dst=2.1.stencil_testing
+set dst=3.1.blending_discard
 
 cd advanced_opengl
 
