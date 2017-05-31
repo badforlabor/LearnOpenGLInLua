@@ -1,5 +1,5 @@
 set src=1.1.depth_testing
-set dst=3.1.blending_discard
+set dst=5.1.framebuffers
 
 cd advanced_opengl
 
