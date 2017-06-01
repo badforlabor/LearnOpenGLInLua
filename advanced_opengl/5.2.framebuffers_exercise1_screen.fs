@@ -2,7 +2,7 @@
 
 #define GRAY 0
 #define BLUR 0
-#define EDGE_DETECT 1
+#define EDGE_DETECT 0
 
 
 out vec4 FragColor;

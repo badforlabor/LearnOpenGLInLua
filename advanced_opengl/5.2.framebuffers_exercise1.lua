@@ -39,7 +39,7 @@ local framebuffer, rbo;
 local screen_width = 800;
 local screen_height = 600;
 
-local currentfile = 'advanced_opengl/5.1.framebuffers'
+local currentfile = 'advanced_opengl/5.2.framebuffers_exercise1'
 -- local currentfile = 'lighting/1.colors'
 
 local LastX, LastY;
@@ -56,13 +56,13 @@ local planeVertices =
   };
 local quadVertices = 
   {
-        -1.0,  1.0,  0.0, 1.0,
-        -1.0, -1.0,  0.0, 0.0,
-         1.0, -1.0,  1.0, 0.0,
+        -0.5,  1.0,  0.0, 1.0,
+        -0.5,  0,  0.0, 0.0,
+         0.5,  0,  1.0, 0.0,
 
-        -1.0,  1.0,  0.0, 1.0,
-         1.0, -1.0,  1.0, 0.0,
-         1.0,  1.0,  1.0, 1.0
+        -0.5,  1.0,  0.0, 1.0,
+         0.5,  0,  1.0, 0.0,
+         0.5,  1.0,  1.0, 1.0
   };
  local cubeTexture, floorTexture; 
   
@@ -98,22 +98,29 @@ end
 function display_func()
   if quit then return end
   
+  -- 制作一个镜面效果。先绘制所有内容到framebuffer上，然后再绘制所有内容到屏幕，并且绘制framebuffer到屏幕。
+
   -- 将所有内容都绘制到framebuffer上。
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   glEnable(GL_DEPTH_TEST);
 
-  glClearColor(0.1, 0.1, 0.1, 1.0);
-  glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)
-
-  
+  --glClearColor(0.1, 0.1, 0.1, 1.0);
+  glClearColor(0,0.5,0, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)  
   
   lightingShader:use();  
   -- sample2d用SetInt代替，值1与下面的glActiveTexture(GL_TEXTURE1)相对应
   lightingShader:SetInt("texture1", 0);
   
+  camera.Yaw = camera.Yaw + 180;
+  camera.Pitch = camera.Pitch + 180;
+  camera:updateCameraVectors();
+  local view = camera:GetViewMatrix();
+  camera.Yaw = camera.Yaw - 180;
+  camera.Pitch = camera.Pitch - 180;
+  camera:updateCameraVectors();
 
   local projection = glm.perspective(glm.radians(camera.Zoom), 800 / 600.0, 0.1, 100);
-  local view = camera:GetViewMatrix();
   lightingShader:setMat4("projection", projection);
   lightingShader:setMat4("view", view);
   
@@ -141,11 +148,34 @@ function display_func()
   glDrawArrays(GL_TRIANGLES, 0, 6);
   glBindVertexArray(0);
 
-  -- 将framebuffer的内容，绘制到屏幕上
+  -- 将原有内容绘制到屏幕上
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClearColor(0.1,0.1,0.1,1);
+  glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT);
+  -- cubes
+  model = glm.mat4:new();
+  glBindVertexArray(cubeVAO);
+  glBindTexture(GL_TEXTURE_2D, cubeTexture);
+  model = glm.translate(model, glm.vec3:new(-1,0,-1));
+  lightingShader:SetMat4("model", model);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+  
+  model = glm.mat4:new();
+  model = glm.translate(model, glm.vec3:new(2,0,0));
+  lightingShader:SetMat4("model", model);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+  
+  -- floor
+  glBindVertexArray(planeVAO);
+  glBindTexture(GL_TEXTURE_2D, floorTexture);
+  model = glm.mat4:new();
+  lightingShader:SetMat4("model", model);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+  glBindVertexArray(0);
+  
+
+  -- 将framebuffer的内容也绘制到屏幕上
   glDisable(GL_DEPTH_TEST);
-  glClearColor(0.1, 0.1, 0.1, 1);
-  glClear(GL_COLOR_BUFFER_BIT);
 
   screenShader:use();
   screenShader:SetInt('texture1', 0);

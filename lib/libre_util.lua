@@ -98,6 +98,35 @@ function LoadTexture(path)
   
   return ret;
 end
+function LoadCubemap( faces )
+  local textures = glGenTextures(1);
+  local textureID = textures[1];
+  glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+  for i=1,table.getn(faces),1
+  do
+    local succ,width,height,data,comp = stbi_load(faces[i]);
+    if(succ == 1)
+    then
+      print('load texture succ:' .. faces[i]);
+      local format = GL_RGB;
+      
+      if (comp == 1) then format = GL_RED; end
+      if (comp == 3) then format = GL_RGB; end
+      if (comp == 4) then format = GL_RGBA; end
+
+      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i - 1, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+      stbi_image_free(data);
+    else
+      print('load texture failed:' .. faces[i]);
+    end
+  end
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  return textureID;
+end
 
 -- vec3, mat4工具函数
 function vec3_zero()

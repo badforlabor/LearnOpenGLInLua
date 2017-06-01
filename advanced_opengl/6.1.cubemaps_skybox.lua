@@ -29,42 +29,64 @@ local quit = false
 local fps = 60
 local msec = 1000 / fps
 
-local lightingShader, textureColorBuffer;
+local lightingShader, skyboxShader;
 
-local vbo, cubeVAO, lightVAO;
-local planeVBO, planeVAO;
-local quadVBO, quadVAO;
+local vbo, cubeVAO;
+local skyboxVBO, skyboxVAO;
 
-local framebuffer, rbo;
 local screen_width = 800;
 local screen_height = 600;
 
-local currentfile = 'advanced_opengl/5.1.framebuffers'
+local currentfile = 'advanced_opengl/6.1.cubemaps_skybox'
 -- local currentfile = 'lighting/1.colors'
 
 local LastX, LastY;
 
-local planeVertices = 
+local skyboxVertices = 
   {
-         5.0, -0.5,  5.0,  2.0, 0.0,
-        -5.0, -0.5,  5.0,  0.0, 0.0,
-        -5.0, -0.5, -5.0,  0.0, 2.0,
+        -1.0,  1.0, -1.0,
+        -1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+         1.0,  1.0, -1.0,
+        -1.0,  1.0, -1.0,
 
-         5.0, -0.5,  5.0,  2.0, 0.0,
-        -5.0, -0.5, -5.0,  0.0, 2.0,
-         5.0, -0.5, -5.0,  2.0, 2.0	
-  };
-local quadVertices = 
-  {
-        -1.0,  1.0,  0.0, 1.0,
-        -1.0, -1.0,  0.0, 0.0,
-         1.0, -1.0,  1.0, 0.0,
+        -1.0, -1.0,  1.0,
+        -1.0, -1.0, -1.0,
+        -1.0,  1.0, -1.0,
+        -1.0,  1.0, -1.0,
+        -1.0,  1.0,  1.0,
+        -1.0, -1.0,  1.0,
 
-        -1.0,  1.0,  0.0, 1.0,
-         1.0, -1.0,  1.0, 0.0,
-         1.0,  1.0,  1.0, 1.0
+         1.0, -1.0, -1.0,
+         1.0, -1.0,  1.0,
+         1.0,  1.0,  1.0,
+         1.0,  1.0,  1.0,
+         1.0,  1.0, -1.0,
+         1.0, -1.0, -1.0,
+
+        -1.0, -1.0,  1.0,
+        -1.0,  1.0,  1.0,
+         1.0,  1.0,  1.0,
+         1.0,  1.0,  1.0,
+         1.0, -1.0,  1.0,
+        -1.0, -1.0,  1.0,
+
+        -1.0,  1.0, -1.0,
+         1.0,  1.0, -1.0,
+         1.0,  1.0,  1.0,
+         1.0,  1.0,  1.0,
+        -1.0,  1.0,  1.0,
+        -1.0,  1.0, -1.0,
+
+        -1.0, -1.0, -1.0,
+        -1.0, -1.0,  1.0,
+         1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+        -1.0, -1.0,  1.0,
+         1.0, -1.0,  1.0
   };
- local cubeTexture, floorTexture; 
+local cubeTexture, cubemapTexture; 
   
 
 function resize_func(w, h)
@@ -98,14 +120,9 @@ end
 function display_func()
   if quit then return end
   
-  -- 将所有内容都绘制到framebuffer上。
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   glEnable(GL_DEPTH_TEST);
-
   glClearColor(0.1, 0.1, 0.1, 1.0);
   glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)
-
-  
   
   lightingShader:use();  
   -- sample2d用SetInt代替，值1与下面的glActiveTexture(GL_TEXTURE1)相对应
@@ -127,32 +144,19 @@ function display_func()
   model = glm.translate(model, glm.vec3:new(-1,0,-1));
   lightingShader:SetMat4("model", model);
   glDrawArrays(GL_TRIANGLES, 0, 36);
-  
-  model = glm.mat4:new();
-  model = glm.translate(model, glm.vec3:new(2,0,0));
-  lightingShader:SetMat4("model", model);
-  glDrawArrays(GL_TRIANGLES, 0, 36);
-  
-  -- floor
-  glBindVertexArray(planeVAO);
-  glBindTexture(GL_TEXTURE_2D, floorTexture);
-  model = glm.mat4:new();
-  lightingShader:SetMat4("model", model);
-  glDrawArrays(GL_TRIANGLES, 0, 6);
-  glBindVertexArray(0);
 
-  -- 将framebuffer的内容，绘制到屏幕上
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glDisable(GL_DEPTH_TEST);
-  glClearColor(0.1, 0.1, 0.1, 1);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  screenShader:use();
-  screenShader:SetInt('texture1', 0);
+  -- 天空盒，后绘制天空盒的目的是，做ztest的时候，能过直接剔除掉被“cubes”挡住的部分。
+  glDepthFunc(GL_LEQUAL);
+  skyboxShader:use();
+  skyboxShader:setMat4("projection", projection);
+  view = glm.mat4:new(glm.mat3:new(camera:GetViewMatrix()));
+  skyboxShader:setMat4("view", view);
+  skyboxShader:SetInt("texture1", 0);
   glActiveTexture(GL_TEXTURE0);
-  glBindVertexArray(quadVAO);
-  glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
-  glDrawArrays(GL_TRIANGLES, 0, 6);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+  glBindVertexArray(skyboxVAO);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+  glDepthFunc(GL_LESS);  
   
   glutSwapBuffers()
 end
@@ -215,7 +219,7 @@ glEnable(GL_DEPTH_TEST);
 glDepthFunc(GL_LESS);
 
 lightingShader = Shader:new(currentfile .. '.vs', currentfile .. '.fs');
-screenShader = Shader:new(currentfile .. '_screen.vs', currentfile .. '_screen.fs');
+skyboxShader = Shader:new(currentfile .. '.skybox.vs', currentfile .. '.skybox.fs');
 -- << init end
 
 -- >> 准备数据，绘制一个三角形
@@ -223,8 +227,8 @@ local VBO_ARRAY = glGenBuffers(3);
 local VAO_ARRAY = glGenVertexArrays(3);
 vbo = VBO_ARRAY[1];
 cubeVAO = VAO_ARRAY[1];
-planeVBO = VBO_ARRAY[2];
-planeVAO = VAO_ARRAY[2];
+skyboxVBO = VBO_ARRAY[2];
+skyboxVAO = VAO_ARRAY[2];
 quadVBO = VBO_ARRAY[3];
 quadVAO = VAO_ARRAY[3];
 local vertices = 
@@ -283,52 +287,24 @@ glEnableVertexAttribArray(0);
 glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof_float(), 3 * sizeof_float());
 glEnableVertexAttribArray(1);
 
-glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-glBufferFormatedData(GL_ARRAY_BUFFER, GL_FLOAT, planeVertices, GL_STATIC_DRAW);
+glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+glBufferFormatedData(GL_ARRAY_BUFFER, GL_FLOAT, skyboxVertices, GL_STATIC_DRAW);
 
-glBindVertexArray(planeVAO);
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof_float(), 0);
+glBindVertexArray(skyboxVAO);
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof_float(), 0);
 glEnableVertexAttribArray(0);
-glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof_float(), 3 * sizeof_float());
-glEnableVertexAttribArray(1);
-
-glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-glBufferFormatedData(GL_ARRAY_BUFFER, GL_FLOAT, quadVertices, GL_STATIC_DRAW);
-
-glBindVertexArray(quadVAO);
-glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof_float(), 0);
-glEnableVertexAttribArray(0);
-glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof_float(), 2 * sizeof_float());
-glEnableVertexAttribArray(1);
-
--- 准备framebuffer和renderbuffer
-local framebuffers = glGenFramebuffers(1);
-framebuffer = framebuffers[1];
-print('framebuffer:' .. framebuffer);
-glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-local textureColorBuffers = glGenTextures(1);
-textureColorBuffer = textureColorBuffers[1];
-print('textureColorBuffer:' .. textureColorBuffer);
-glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_width, screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nil);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,textureColorBuffer,0);
-local rbos = glGenRenderbuffers(1);
-local rbo = rbos[1];
-glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width, screen_height);
-glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-if(glCheckFramebufferStatus(GL_FRAMEBUFFER) ~= GL_FRAMEBUFFER_COMPLETE)
-then
-  print('failed frame buffer');
-end
-glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 -- << 数据准备完毕
 
 cubeTexture = LoadTexture("resources/textures/marble.jpg");
-floorTexture = LoadTexture("resources/textures/metal.png");
+local faces = {
+  "resources/textures/skybox/right.jpg",
+  "resources/textures/skybox/left.jpg",
+  "resources/textures/skybox/top.jpg",
+  "resources/textures/skybox/bottom.jpg",
+  "resources/textures/skybox/back.jpg",
+  "resources/textures/skybox/front.jpg"
+};
+cubemapTexture = LoadCubemap(faces);
 
 glutDisplayFunc(display_func)
 glutKeyboardFunc(keyboard_func)
