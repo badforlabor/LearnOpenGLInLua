@@ -64,7 +64,7 @@ function Camera:ProcessKeyboard(pos)
     end
   end
   
-  print('pos:' .. pos);
+  print('pos:' .. Vec3ToString(self.Position));
   
 end
 
@@ -78,6 +78,8 @@ function Camera:ProcessMouseMovement(xoffset,yoffset)
   yoffset = yoffset * sensitivity;
   self.Yaw = self.Yaw + xoffset;
   self.Pitch = self.Pitch + yoffset;
+
+  print('Yaw:' .. self.Yaw .. ', Pitch:' .. self.Pitch);
   
   self:updateCameraVectors();
 end
