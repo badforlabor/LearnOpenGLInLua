@@ -7,16 +7,16 @@ Shader =
   ID = 0,
 };
 
-function Shader:Init(vs, fs)
-  self.ID = LoadShaderEx(vs, fs);
+function Shader:Init(vs, fs, gs)
+  self.ID = LoadShaderEx(vs, fs, gs);
 end
 
-function Shader:new(vs, fs)
+function Shader:new(vs, fs, gs)
   local o = {};
   setmetatable(o, self);
   self.__index = self;
   
-  o:Init(vs, fs);
+  o:Init(vs, fs, gs);
   
   return o;
 end

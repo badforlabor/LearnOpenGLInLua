@@ -9,37 +9,38 @@ function ReadAllText(filename)
   return alltext;
 end
 
--- 加载shader。传入vs代码和fs代码
-function LoadShader(vs, fs)
-  local vid = glCreateShader(GL_VERTEX_SHADER)
-  local fid = glCreateShader(GL_FRAGMENT_SHADER)
-
+function CompileShader(vid, vs, tag)
   glShaderSource(vid, 1, vs, {});
   glCompileShader(vid);
+  tag = tag or "";
   
   -- 编译结果检查
   local succ = glGetShaderiv(vid, GL_COMPILE_STATUS);
   if(succ[1] == 0)
   then
     local msg = glGetShaderInfoLog(vid);
-    print('compile vertex failed:' .. msg);
+    print('compile ' .. tag .. ' shader failed:' .. msg);
+  else
+    print('compile ' .. tag .. ' shader succ:');
   end
+end
 
-  
-  glShaderSource(fid, 1, fs, {});
-  glCompileShader(fid);
-  
-  -- 编译结果检查
-  succ = glGetShaderiv(fid, GL_COMPILE_STATUS);
-  if(succ[1] == 0)
-  then
-    msg = glGetShaderInfoLog(fid);
-    print('compile fragment failed:' .. msg);
-  end
+-- 加载shader。传入vs代码和fs代码
+function LoadShader(vs, fs, gs)
+  local vid = glCreateShader(GL_VERTEX_SHADER)
+  local fid = glCreateShader(GL_FRAGMENT_SHADER)
+  local gid = 0;
+  if gs ~= nil then gid = glCreateShader(GL_GEOMETRY_SHADER) end
+
+  CompileShader(vid, vs, "VERTEX");
+  CompileShader(fid, fs, "FRAGMENT");
+
+  if gs ~= nil then CompileShader(gid, gs, "GEOMETRY"); end  
 
   local pid = glCreateProgram();
   glAttachShader(pid, vid);
   glAttachShader(pid, fid);
+  if gid ~= 0 then glAttachShader(pid, gid); end
   glLinkProgram(pid);
   
   -- 加载失败后提示一下
@@ -52,13 +53,16 @@ function LoadShader(vs, fs)
 
   glDeleteShader(vid);
   glDeleteShader(fid);
+  glDeleteShader(gid);
   return pid;
 end
 
-function LoadShaderEx(vs, fs)  
+function LoadShaderEx(vs, fs, gs)  
   local vertex_source = ReadAllText(vs);
   local fragment_source = ReadAllText(fs);
-  local sid = LoadShader(vertex_source, fragment_source);
+  local gs_source = nil;
+  if gs ~= nil then gs_source = ReadAllText(gs); end;
+  local sid = LoadShader(vertex_source, fragment_source, gs_source);
   return sid;
 end
 

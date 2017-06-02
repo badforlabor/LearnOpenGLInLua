@@ -1,5 +1,5 @@
-set src=6.1.cubemaps_skybox
-set dst=6.2.cubemaps_environment_mapping
+set src=1.1.depth_testing
+set dst=6.3.geometry_shader_houses
 
 cd advanced_opengl
 
