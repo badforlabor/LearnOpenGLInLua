@@ -1,7 +1,7 @@
-set src=9.3.normal_visualization
-set dst=1.1.advanced_lighting
+set src=1.1.advanced_lighting
+set dst=3.1.shadow_mapping_depth
 
-cd advanced_opengl
+cd advanced_lighting
 
 copy /y %src%.lua %dst%.lua
 copy /y %src%.vs %dst%.vs
