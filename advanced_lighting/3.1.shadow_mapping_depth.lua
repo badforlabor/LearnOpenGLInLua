@@ -28,6 +28,8 @@ local lightPos = glm.vec3:new(-2,4,-1);
 local quit = false
 local fps = 60
 local msec = 1000 / fps
+local SCREEN_WIDTH = 1280;
+local SCREEN_HEIGHT = 720;
 
 local myshader, debugShader;
 
@@ -63,6 +65,7 @@ function SetData()
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   myshader = Shader:new(currentfile .. '.vs', currentfile .. '.fs');
+  debugShader = Shader:new(currentfile .. '.debug.vs', currentfile .. '.debug.fs');
 
   -- >> 准备数据，绘制一些点
   local VBO_ARRAY = glGenBuffers(1);
@@ -98,7 +101,6 @@ function SetData()
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-  local GL_DEPTH_ATTACHMENT = 0x8D00;
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
   -- drawbuffer和readbuffer的目的是，提交一次渲染，让depthbuffer生效。
   glDrawBuffer(GL_NONE);
@@ -171,6 +173,8 @@ function renderCube()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof_float(), 3 * sizeof_float());
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof_float(), 6 * sizeof_float());
+    glEnableVertexAttribArray(2);
   end
 
   glBindVertexArray(cubeVAO);
@@ -200,14 +204,14 @@ function renderQuad(  )
     glBufferFormatedData(GL_ARRAY_BUFFER, GL_FLOAT, quadVertices, GL_STATIC_DRAW);
 
     glBindVertexArray(quadVAO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof_float(), 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof_float(), 0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof_float(), 3 * sizeof_float());
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof_float(), 3 * sizeof_float());
     glEnableVertexAttribArray(1);
   end
 
   glBindVertexArray(quadVAO);
-  glDrawArrays(GL_TRIANGLES, 0, 4);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glBindVertexArray(0);
 end
 
@@ -215,7 +219,7 @@ function renderScene(tempShader)
   local model;
   -- 绘制地板
   model = glm.mat4:new();
-  tempShader.SetMat4("model", model);
+  tempShader:SetMat4("model", model);
   glBindVertexArray(vao);
   glDrawArrays(GL_TRIANGLES, 0, 6);
   -- 绘制地板上的箱子
@@ -225,7 +229,7 @@ function renderScene(tempShader)
   tempShader:SetMat4("model", model);
   renderCube();
   model = glm.mat4:new();
-  model = glm.translate(model, glm.vec3:new(0.2,0,1.0));
+  model = glm.translate(model, glm.vec3:new(2,0,1.0));
   model = glm.scale(model, glm.vec3:new(0.5,0.5,0.5));
   tempShader:SetMat4("model", model);
   renderCube();
@@ -247,27 +251,29 @@ function display_func()
 
   -- 以灯光的视角，渲染场景，目的是，获取出场景中物件的深度值
   local lightProjection = glm.ortho(-10, 10, -10, 10, nearPlane, farPlane);
-  local lightView = glm.LookAt(lightPos, glm.vec3:new(0,0,0), glm.vec3:new(0,1,0));
+  local lightView = glm.lookAt(lightPos, glm.vec3:new(0,0,0), glm.vec3:new(0,1,0));
   local lightSpaceMatrix = lightProjection * lightView;
 
   myshader:use();  
   myshader:SetMat4("lightSpaceMatrix", lightSpaceMatrix);
-  myshader:SetInt("")
+  --myshader:SetInt("")
   glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-  glBindFramebuffer(depthMapFBO);
-  glClear(GL_DPETH_BUFFER_BIT);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, floorTexture);
-  renderScene(myshader);
+  glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, floorTexture);
+    renderScene(myshader);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  glViewport(0,0,800, 600);
+  glViewport(0,0,SCREEN_WIDTH, SCREEN_HEIGHT);
   glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT);
 
   debugShader:use();
   debugShader:SetFloat("nearPlane", nearPlane);
   debugShader:SetFloat("farPlane", farPlane);
-  debugShader:SetInt("depthMap", depthMap);
+  debugShader:SetInt("depthMap", 0);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, depthMap);
   renderQuad();
 
   glutSwapBuffers()
@@ -352,7 +358,7 @@ glutInit(arg)
 glutInitDisplayMode(GLUT_RGB + GLUT_DOUBLE + GLUT_DEPTH)
 if arg then title = arg[0] else title = "glut" end
 window = glutCreateWindow(title)
-glutReshapeWindow(800,600);
+glutReshapeWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 -- >> init glew and shader
 glewInit()
