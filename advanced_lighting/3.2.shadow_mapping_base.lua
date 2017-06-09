@@ -4,11 +4,13 @@ require 'lib/MyWindowFramework'
 
 local lightPos = glm.vec3:new(-2,4,-1);
 
-local myshader, debugShader;
+local myshader;
+local debugShader;
+local depthShader;
 
 local vbo, vao;
 
-local currentfile = 'advanced_lighting/3.1.shadow_mapping_depth'
+local currentfile = 'advanced_lighting/3.2.shadow_mapping_base'
 -- local currentfile = 'lighting/1.colors'
 
 local floorTexture;
@@ -31,8 +33,9 @@ function OnInit()
 
   myshader = Shader:new(currentfile .. '.vs', currentfile .. '.fs');
   debugShader = Shader:new(currentfile .. '.debug.vs', currentfile .. '.debug.fs');
+  depthShader = Shader:new(currentfile .. '.depth.vs', currentfile .. '.depth.fs');
 
-
+  -- >> 准备数据，绘制一些点
   local planeVertices = 
   {
           25.0, -0.5,  25.0,  0.0, 1.0, 0.0,  25.0,  0.0,
@@ -43,8 +46,6 @@ function OnInit()
           -25.0, -0.5, -25.0,  0.0, 1.0, 0.0,   0.0, 25.0,
           25.0, -0.5, -25.0,  0.0, 1.0, 0.0,  25.0, 10.0
   };
-
-  -- >> 准备数据，绘制一些点
   local VBO_ARRAY = glGenBuffers(1);
   local VAO_ARRAY = glGenVertexArrays(1);
   vbo = VBO_ARRAY[1];
@@ -83,8 +84,15 @@ function OnInit()
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-end
 
+  -- 
+  myshader:use();
+  myshader:SetInt("diffuseTexture", 0);
+  myshader:SetInt("shadowMap", 1);
+  debugShader:use();
+  debugShader:SetInt("depthMap", 0);
+
+end
 
 function OnDraw()
   
@@ -96,30 +104,49 @@ function OnDraw()
   local lightView = glm.lookAt(lightPos, glm.vec3:new(0,0,0), glm.vec3:new(0,1,0));
   local lightSpaceMatrix = lightProjection * lightView;
 
-  myshader:use();  
-  myshader:SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+  -- 渲染深度值到fbo上
+  depthShader:use();  
+  depthShader:SetMat4("lightSpaceMatrix", lightSpaceMatrix);
   --myshader:SetInt("")
   glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, floorTexture);
-    renderScene(myshader);
+    renderScene(depthShader);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+  -- 绘制场景  
   glViewport(0,0,SCREEN_WIDTH, SCREEN_HEIGHT);
   glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT);
-
-  debugShader:use();
-  debugShader:SetFloat("nearPlane", nearPlane);
-  debugShader:SetFloat("farPlane", farPlane);
-  debugShader:SetInt("depthMap", 0);
+  myshader:use();
+  local projection = glm.perspective(mainCamera.Zoom, 1.0 * SCREEN_WIDTH / SCREEN_HEIGHT, 0.1, 100);
+  local view = mainCamera:GetViewMatrix();
+  myshader:SetMat4("projection", projection);
+  myshader:SetMat4("view", view);
+  myshader:SetVec3("viewPos", mainCamera.Position);
+  myshader:SetVec3("lightPos", lightPos);
+  myshader:SetMat4("lightSpaceMatrix", lightSpaceMatrix);
   glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, floorTexture);
+  glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, depthMap);
-  renderQuad();
+  renderScene(myshader, nil);
+
+  -- 调试
+  local debug_depth = false;
+  if debug_depth
+  then
+    debugShader:use();
+    debugShader:SetFloat("nearPlane", nearPlane);
+    debugShader:SetFloat("farPlane", farPlane);
+    debugShader:SetInt("depthMap", 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    renderQuad();
+  end
 
 end
-  
 
 local cubeVAO = 0
 local cubeVBO = 0;
@@ -225,13 +252,15 @@ function renderQuad(  )
   glBindVertexArray(0);
 end
 
-function renderScene(tempShader)
+function renderScene(tempShader, nofloor)
   local model;
   -- 绘制地板
+  if nofloor == nil then
   model = glm.mat4:new();
   tempShader:SetMat4("model", model);
   glBindVertexArray(vao);
   glDrawArrays(GL_TRIANGLES, 0, 6);
+  end
   -- 绘制地板上的箱子
   model = glm.mat4:new();
   model = glm.translate(model, glm.vec3:new(0,1.5,0));
@@ -251,6 +280,7 @@ function renderScene(tempShader)
   renderCube();
 end
 
+  
 
 -- press ESC to exit
 function OnKey(key)      

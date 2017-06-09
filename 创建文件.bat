@@ -1,5 +1,5 @@
-set src=1.1.advanced_lighting
-set dst=3.1.shadow_mapping_depth
+set src=3.1.shadow_mapping_depth
+set dst=3.2.shadow_mapping_base
 
 cd advanced_lighting
 
@@ -7,7 +7,7 @@ copy /y %src%.lua %dst%.lua
 copy /y %src%.vs %dst%.vs
 copy /y %src%.fs %dst%.fs
 copy /y %src%.gs %dst%.gs
-copy /y %src%.skybox.vs %dst%.skybox.vs
-copy /y %src%.skybox.fs %dst%.skybox.fs
+copy /y %src%.debug.vs %dst%.debug.vs
+copy /y %src%.debug.fs %dst%.debug.fs
 
 ::pause
