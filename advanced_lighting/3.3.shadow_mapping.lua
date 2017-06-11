@@ -10,7 +10,7 @@ local depthShader;
 
 local vbo, vao;
 
-local currentfile = 'advanced_lighting/3.2.shadow_mapping_base'
+local currentfile = 'advanced_lighting/3.3.shadow_mapping'
 -- local currentfile = 'lighting/1.colors'
 
 local floorTexture;

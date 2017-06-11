@@ -123,6 +123,11 @@ function keyboard_func(key,x,y)
 
     -- 按键'B'
     if key == 98 then OnPressKey('b') end;
+    if key == 110 then OnPressKey('n') end;
+end
+
+function glutGetTime()
+  return glutGet(GLUT_ELAPSED_TIME);
 end
 
 function glMain()
