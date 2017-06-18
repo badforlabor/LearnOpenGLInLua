@@ -8,7 +8,7 @@ local myshader;
 
 local vbo, vao;
 
-local currentfile = 'advanced_lighting/5.1.parallax_mapping'
+local currentfile = 'advanced_lighting/5.2.steep_parallax_mapping'
 -- local currentfile = 'lighting/1.colors'
 
 local floorTexture;

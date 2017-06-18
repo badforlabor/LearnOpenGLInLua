@@ -1,5 +1,5 @@
-set src=4.1.normal_mapping
-set dst=5.1.parallax_mapping
+set src=3.3.shadow_mapping
+set dst=6.1.hdr
 
 cd advanced_lighting
 
