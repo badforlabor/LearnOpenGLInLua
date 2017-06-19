@@ -93,7 +93,7 @@ end
 -- press ESC to exit
 function keyboard_func(key,x,y)
   
-  print('key' .. key);
+  print('key' .. key .. ', char:' .. string.char(key));
   
    if key == 27 then
       quit = true
@@ -122,12 +122,14 @@ function keyboard_func(key,x,y)
     end
 
     -- 按键'B'
-    if key == 98 then OnPressKey('b') end;
-    if key == 110 then OnPressKey('n') end;
+    --if key == 98 then OnPressKey('b') end;
+    --if key == 110 then OnPressKey('n') end;
+
+    OnPressKey(string.char(key));
 end
 
 function glutGetTime()
-  return glutGet(GLUT_ELAPSED_TIME);
+  return glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 end
 
 function glMain()

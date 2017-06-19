@@ -170,7 +170,7 @@ function renderQuad(  )
   end
 
   glBindVertexArray(quadVAO);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
   glBindVertexArray(0);
 end
   
