@@ -52,8 +52,6 @@ function OnInit()
   shaderLightBox = Shader:new(currentfile .. '.light_box.vs', currentfile .. '.light_box.fs');
 
   -- >> 准备数据，绘制一些点
-  woodTexture = LoadTexture("resources/textures/wood.png");
-
   nanosuit = libre.Model:new("resources/objects/nanosuit/nanosuit.obj");
   objectPositions = 
   {
@@ -137,9 +135,9 @@ end
 
 function OnDraw()
   
-  glClearColor(0.1, 0.1, 0.1, 1.0);
+  glClearColor(0, 0, 0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)
-  local projection = glm.perspective(glm.radians(mainCamera.Zoom), SCREEN_WIDTH / SCREEN_HEIGHT, 0.1, 100);
+  local projection = glm.perspective(glm.radians(mainCamera.Zoom), 1.0 * SCREEN_WIDTH / SCREEN_HEIGHT, 0.1, 100);
   local view = mainCamera:GetViewMatrix();
   local model;
 
@@ -175,6 +173,13 @@ function OnDraw()
     shaderLightingPass:SetFloat("lights[" .. (i-1) .. "].Quadratic", quadratic);
   end
   shaderLightingPass:SetVec3("viewPos", mainCamera.Position);
+  renderQuad();
+
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  glBlitFramebuffer(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
   shaderLightBox:use();
   shaderLightBox:SetMat4("projection", projection);
@@ -183,6 +188,8 @@ function OnDraw()
     model = glm.mat4:new();
     model = glm.translate(model, lightPositions[i]);
     model = glm.scale(model, glm.vec3:new(0.125,0.125,0.125));
+    shaderLightBox:SetMat4("model", model);
+    shaderLightBox:SetVec3("lightColor", lightColors[i]);
     renderCube();
   end
 
