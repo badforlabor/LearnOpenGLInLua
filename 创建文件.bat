@@ -1,5 +1,5 @@
-set src=3.3.shadow_mapping
-set dst=6.1.hdr
+set src=6.1.hdr
+set dst=8.1.deferred_shading
 
 cd advanced_lighting
 
