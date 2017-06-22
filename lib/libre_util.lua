@@ -178,3 +178,6 @@ end
 function sizeof_int()
   return 4;
 end
+function lerp(a,b,alpha)
+  return a + alpha * (b-a);
+end
