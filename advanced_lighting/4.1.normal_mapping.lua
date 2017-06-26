@@ -102,6 +102,8 @@ function renderQuad(  )
     local bitangent1 = glm.vec3:new();
     local tangent2 = glm.vec3:new();
     local bitangent2 = glm.vec3:new();
+
+    -- （点1，点2，点3）组成的三角形
     local edge1 = pos2 - pos1;
     local edge2 = pos3 - pos1;
     local deltaUV1 = uv2 - uv1;
@@ -118,6 +120,7 @@ function renderQuad(  )
     bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.y * edge2.z);
     bitangent1 = glm.normalize(bitangent1);
 
+    -- （点1，点3，点4）组成的三角形
     edge1 = pos3 - pos1;
     edge2 = pos4 - pos1;
     deltaUV1 = uv3 - uv1;
